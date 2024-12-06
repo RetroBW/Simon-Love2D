@@ -1,7 +1,21 @@
--- TODO:
--- fix button to color alignment
-
 io.stdout:setvbuf("no")
+
+-- RP Mini, Odin 2
+--btn_i_START = 7
+--btn_i_RED = 3
+--btn_i_GREEN = 4
+--btn_i_BLUE = 1
+--btn_i_YELLOW = 2
+
+-- 8bitdo
+btn_i_START = 8
+btn_i_RED = 4
+btn_i_GREEN = 3
+btn_i_BLUE = 2
+btn_i_YELLOW = 1
+
+win_dx = 640
+win_dy = 480
 
 btn_start = false
 btn_MEM = 0
@@ -26,7 +40,6 @@ tmr_color_on_PRE = 1.0
 tmr_color_off_PRE = 0.25
 tmr_ACC = 0.0
 color_i = 1
-color_i_max = 1
 colors = {}
 
 ----------
@@ -35,15 +48,18 @@ colors = {}
 function love.load()
   -- init application
 	love.window.setTitle("Simon")
-	love.window.setMode(480, 480)
+	love.window.setMode(400, 400)
+  local safeX, safeY, safeW, safeH = love.window.getSafeArea()
+	love.graphics.translate(safeX, safeY)
+
   -- init red button
-  init_button(1.0, 0.0, 0.0, 50.0, 240, 240 - 100, false)
+  init_button(1.0, 0.0, 0.0, 50.0, (safeW / 2), (safeH / 2) - 100, false)
   -- init green button
-  init_button(0.0, 1.0, 0.0, 50.0, 240 - 100, 240, false)
+  init_button(0.0, 1.0, 0.0, 50.0, (safeW / 2) - 100, (safeH / 2), false)
   -- init blue button
-  init_button(0.0, 0.0, 1.0, 50.0, 240 + 100, 240, false)
+  init_button(0.0, 0.0, 1.0, 50.0, (safeW / 2) + 100, (safeH / 2), false)
   -- init yellow button
-  init_button(1.0, 1.0, 0.0, 50.0, 240, 240 + 100, false)
+  init_button(1.0, 1.0, 0.0, 50.0, (safeW / 2), (safeH / 2) + 100, false)
   -- init random color table
   for i=1,999 do
     table.insert(colors, 1)
@@ -74,18 +90,41 @@ function love.update(dt)
 	-- get joystick input
 	local joysticks = love.joystick.getJoysticks()
 	if #joysticks > 0 then
-		btns[COLOR_YELLOW].pressed = joysticks[1]:isDown(1)
-		btns[COLOR_BLUE].pressed = joysticks[1]:isDown(2)
-		btns[COLOR_GREEN].pressed = joysticks[1]:isDown(3)
-		btns[COLOR_RED].pressed = joysticks[1]:isDown(4)
-		btn_start = joysticks[1]:isDown(8)
+		btns[COLOR_YELLOW].pressed = joysticks[1]:isDown(btn_i_YELLOW)
+		btns[COLOR_BLUE].pressed = joysticks[1]:isDown(btn_i_BLUE)
+		btns[COLOR_GREEN].pressed = joysticks[1]:isDown(btn_i_GREEN)
+		btns[COLOR_RED].pressed = joysticks[1]:isDown(btn_i_RED)
+		btn_start = joysticks[1]:isDown(btn_i_START)
 	end
   -- get keyboard input
-  btns[COLOR_BLUE].pressed = btns[COLOR_BLUE].pressed or love.keyboard.isDown("down")
-  btns[COLOR_YELLOW].pressed = btns[COLOR_YELLOW].pressed or love.keyboard.isDown("right")
-  btns[COLOR_RED].pressed = btns[COLOR_RED].pressed or love.keyboard.isDown("left")
-  btns[COLOR_GREEN].pressed = btns[COLOR_GREEN].pressed or love.keyboard.isDown("up")
+  btns[COLOR_YELLOW].pressed = btns[COLOR_YELLOW].pressed or love.keyboard.isDown("down")
+  btns[COLOR_BLUE].pressed = btns[COLOR_BLUE].pressed or love.keyboard.isDown("right")
+  btns[COLOR_GREEN].pressed = btns[COLOR_GREEN].pressed or love.keyboard.isDown("left")
+  btns[COLOR_RED].pressed = btns[COLOR_RED].pressed or love.keyboard.isDown("up")
   btn_start = btn_start or love.keyboard.isDown("return")
+  -- get mouse input
+  if love.mouse.isDown(1) then
+    local m_x = love.mouse.getX()
+    local m_y = love.mouse.getY()
+    -- start
+    btn_start = btn_start or (m_y < (btns[COLOR_RED].y - btns[COLOR_RED].r / 2))
+    -- red
+    btns[COLOR_RED].pressed = btns[COLOR_RED].pressed or 
+    (m_x > (btns[COLOR_RED].x - btns[COLOR_RED].r / 2) and m_x < (btns[COLOR_RED].x + btns[COLOR_RED].r / 2) and
+    m_y > (btns[COLOR_RED].y - btns[COLOR_RED].r / 2) and m_y < (btns[COLOR_RED].y + btns[COLOR_RED].r / 2))
+    -- green
+    btns[COLOR_GREEN].pressed = btns[COLOR_GREEN].pressed or 
+    (m_x > (btns[COLOR_GREEN].x - btns[COLOR_GREEN].r / 2) and m_x < (btns[COLOR_GREEN].x + btns[COLOR_GREEN].r / 2) and
+    m_y > (btns[COLOR_GREEN].y - btns[COLOR_GREEN].r / 2) and m_y < (btns[COLOR_GREEN].y + btns[COLOR_GREEN].r / 2))
+    -- blue
+    btns[COLOR_BLUE].pressed = btns[COLOR_BLUE].pressed or 
+    (m_x > (btns[COLOR_BLUE].x - btns[COLOR_BLUE].r / 2) and m_x < (btns[COLOR_BLUE].x + btns[COLOR_BLUE].r / 2) and
+    m_y > (btns[COLOR_BLUE].y - btns[COLOR_BLUE].r / 2) and m_y < (btns[COLOR_BLUE].y + btns[COLOR_BLUE].r / 2))
+    -- yellow
+    btns[COLOR_YELLOW].pressed = btns[COLOR_YELLOW].pressed or 
+    (m_x > (btns[COLOR_YELLOW].x - btns[COLOR_YELLOW].r / 2) and m_x < (btns[COLOR_YELLOW].x + btns[COLOR_YELLOW].r / 2) and
+    m_y > (btns[COLOR_YELLOW].y - btns[COLOR_YELLOW].r / 2) and m_y < (btns[COLOR_YELLOW].y + btns[COLOR_YELLOW].r / 2))
+  end
 	-- ST01_LOST --
 	if ST == ST01_LOST then
 		if btn_start then
@@ -102,7 +141,7 @@ function love.update(dt)
   elseif ST == ST03_CHK_DISP_COLOR_INDEX then
     tmr_ACC = tmr_ACC + dt
     if tmr_ACC >= tmr_color_off_PRE then
-      if color_i < color_i_max then
+      if color_i < #colors then
         new_state(ST02_DISP_NEXT_COLOR)
       else
         new_state(ST04_GET_NEXT_COLOR_BTN_PRESS)
@@ -131,7 +170,7 @@ function love.update(dt)
       -- print("  color_i: " .. color_i)
       -- print("  colors[color_i]: " .. colors[color_i])
       if btn_MEM == colors[color_i] then
-        if color_i < color_i_max then 
+        if color_i < #colors then 
           if tmr_ACC > 0.1 then
             new_state(ST04_GET_NEXT_COLOR_BTN_PRESS)
           end
@@ -167,28 +206,23 @@ function new_state(NST)
       tmr_color_on_PRE = 1.0
       tmr_color_off_PRE = 0.25
       color_i = 1
-      color_i_max = 1
       tmr_ACC = 0 
       -- randomize color list
       love.math.setRandomSeed(love.timer.getTime())
-      colors[1] = math.random(4)
+      colors = {}
+      table.insert(colors, rand())
       print("colors[1]: " .. colors[1])
     elseif ST == ST03_CHK_DISP_COLOR_INDEX then
       color_i = color_i + 1
       tmr_ACC = 0
     elseif ST == ST05_WAIT_FOR_COLOR_BTN_RLS then
       color_i = 1
-      color_i_max = color_i_max + 1
-      colors[color_i_max] = math.random(4)
-      print("colors[" .. color_i_max .. "]: " .. colors[color_i_max])
+      table.insert(colors, rand())
       tmr_color_on_PRE = 0.9 * tmr_color_on_PRE
       tmr_color_off_PRE = 0.9 * tmr_color_off_PRE
     end
   elseif NST == ST03_CHK_DISP_COLOR_INDEX then
     print("ST03_CHK_DISP_COLOR_INDEX")
-    print("  color_i_max: " .. color_i_max)
-    print("  color_i: " .. color_i)
-    print("  colors[color_i]: " .. colors[color_i])
     ST = ST03_CHK_DISP_COLOR_INDEX
     tmr_ACC = 0
   elseif NST == ST04_GET_NEXT_COLOR_BTN_PRESS then
@@ -212,6 +246,11 @@ function new_state(NST)
   tmr_ACC = 0
   -- update state
   ST = NST
+end
+
+-- return random number between 1 and 4
+function rand()
+  return math.floor(love.timer.getTime() * (10^6)) % 4 + 1
 end
 
 ----------
